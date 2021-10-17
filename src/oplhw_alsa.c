@@ -144,6 +144,30 @@ void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_PARAMS, (void *)&dev->oplParams);
 }
 
+/* Find an OPL2 hwdep device to use as the default. */
+static const char *findHwDep()
+{
+	void **hints;
+	const char *hwdep_name = NULL;
+	int err = snd_device_name_hint(-1, "hwdep", &hints);
+	if (err) {
+		return NULL;
+	}
+
+	for (void **current_hint = hints; *current_hint; current_hint++)
+	{
+		const char *name = snd_device_name_get_hint(*current_hint, "NAME");
+		const char *desc = snd_device_name_get_hint(*current_hint, "DESC");
+		if (strstr(desc, "OPL3") || strstr(desc, "OPL2"))
+		{
+			hwdep_name = strdup(name);
+			break;
+		}
+	}
+
+	snd_device_name_free_hint(hints);
+	return hwdep_name;
+}
 
 static void setupStructs(oplhw_device *dev)
 {
@@ -167,12 +191,27 @@ static void setupStructs(oplhw_device *dev)
 
 oplhw_device *oplhw_OpenDevice(const char *dev_name)
 {
+	bool should_free_name = false;
 	oplhw_device *dev = calloc(sizeof(*dev), 1);
+
+	/* If we don't have a dev_name, attempt to find one. */
+	if (!dev_name || !dev_name[0])
+	{
+		dev_name = findHwDep();
+		if (dev_name)
+			should_free_name = true;
+	}
+
 	if (snd_hwdep_open(&dev->oplHwDep, dev_name, SND_HWDEP_OPEN_WRITE) < 0)
 	{
+		if (should_free_name)
+			free((char*)dev_name);
 		/* TODO: Report errors properly. */
 		return NULL;
 	}
+	
+	if (should_free_name)
+		free((char*)dev_name);
 
 	snd_hwdep_info_t *info;
 	snd_hwdep_info_alloca(&info);
