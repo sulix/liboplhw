@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: 0BSD
+
+# oplhw pkg-config source file
+
+prefix="@CMAKE_INSTALL_PREFIX@"
+exec_prefix="${prefix}"
+libdir="@CMAKE_INSTALL_FULL_LIBDIR@"
+includedir="@CMAKE_INSTALL_FULL_INCLUDEDIR@"
+
+Name: oplhw
+Description: A library for using real OPL2 synth chips via ALSA's hwdep interface. 
+Version: @PROJECT_VERSION@
+Requires.private: alsa
+Cflags: -I"${includedir}"
+Libs: -L"${libdir}" -loplhw
