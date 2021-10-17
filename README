@@ -1,0 +1,63 @@
+oplhw: A library for using real OPL2 synth chips via ALSA's hwdep interface
+===========================================================================
+
+liboplhw is a library which provides access to OPL2 chips via this hwdep
+interface. It converts raw OPL2 register writes into the appropriate ALSA hwdep
+ioctl calls. This allows it to easily be used as a drop in replacement for OPL2
+emulators.
+
+Note that, unlike many other projects which provide direct access to the OPL2
+under Linux, oplhw does not require access to the direct I/O ports, and so
+applications do not need to run as root (so long as the user has permission to
+access the sound card, e.g. by being in the audio group).
+
+liboplhw can be built as a static library (default), as a shared library (with
+cmake -DBUILD_SHARED_LIBS=ON), or the files can be included directly in your
+project.
+
+liboplhw's website is available at:
+	https://davidgow.net/hacks/oplhw.html
+And the source code can be found at:
+	https://github.com/sulix/liboplhw
+
+Installation
+------------
+
+To install liboplhw, configure it with CMake, then make install.
+
+1. Make a build directory:
+	$ mkdir build/ ; cd build
+2. Configure it with CMake:
+	$ cmake ..
+	(Note that you may want to set a different installation prefix here
+	with -DCMAKE_INSTALL_PREFIX=<prefix>, for example /usr)
+3. Compile it:
+	$ make
+4. Install it:
+	$ sudo make install
+
+Finding the device name
+-----------------------
+
+To find the device name to use on your system, you'll need the 'card' and
+'hwdep' numbers for your device. The card number is the index of the soundcard
+(you can often find it in `aplay -l`), and the hwdep number is almost always 0.
+To make sure, just look in /proc/asound/hwdep and look for an entry titled
+"OPL3 FM" or "OPL2 FM". The card number and hwdep number will be printed
+beforehand. The device name is then just "hw:${card},${hwdep}". For example,
+"hw:0,0".
+
+Using the API
+-------------
+
+You can use liboplhw really easily. There are only three functions to worry about:
+
+* oplhw_OpenDevice(const char *dev_name)
+	Opens an OPL2 device. Returns an oplhw_device pointer, and accepts the ALSA hwdep name as input.
+* oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+	Writes the byte val to OPL2 register reg on device dev
+* oplhw_CloseDevice(oplhw_device *dev)
+	Closes the device once you've finished using it.
+
+Just #include <oplhw.h>, and link against liboplhw with:
+pkg-config --cflags --libs oplhw
