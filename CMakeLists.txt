@@ -17,7 +17,10 @@ option(BUILD_SHARED_LIBS "Build as a shared library (.so)." OFF)
 
 add_library(oplhw
 	include/oplhw.h
+	src/oplhw_internal.h
+	src/oplhw_retrowave.c
 	src/oplhw_alsa.c
+	src/oplhw_main.c
 )
 
 target_include_directories(oplhw

@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "oplhw.h"
+#include "oplhw_internal.h"
 
 #include <alsa/asoundlib.h>
 #include <sound/asound_fm.h>
@@ -28,52 +29,54 @@
 #include <unistd.h>
 
 
-struct oplhw_device
+typedef struct oplhw_alsa_device
 {
+	oplhw_device dev;
 	snd_hwdep_t *oplHwDep;
 	struct snd_dm_fm_voice oplOperators[32];
 	struct snd_dm_fm_note oplChannels[16];
 	struct snd_dm_fm_params oplParams;
-};
+} oplhw_alsa_device;
 
 const int regToOper[0x20] =
 	{0, 1, 2, 3, 4, 5, -1, -1, 6, 7, 8, 9, 10, 11, -1, -1,
 		12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_alsa_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 {
+	oplhw_alsa_device *alsa_dev = (oplhw_alsa_device *)dev;
 	bool paramsDirty = false;
 	if (reg == 0x08)
 	{
-		dev->oplParams.kbd_split = (val >> 6) & 1;
+		alsa_dev->oplParams.kbd_split = (val >> 6) & 1;
 		paramsDirty = true;
 	}
 	else if (reg == 0xBD)
 	{
 		/* Perussion / Params */
-		dev->oplParams.hihat = (val)&1;
-		dev->oplParams.cymbal = (val >> 1) & 1;
-		dev->oplParams.tomtom = (val >> 2) & 1;
-		dev->oplParams.snare = (val >> 3) & 1;
-		dev->oplParams.bass = (val >> 4) & 1;
-		dev->oplParams.rhythm = (val >> 5) & 1;
-		dev->oplParams.vib_depth = (val >> 6) & 1;
-		dev->oplParams.am_depth = (val >> 7) & 1;
+		alsa_dev->oplParams.hihat = (val)&1;
+		alsa_dev->oplParams.cymbal = (val >> 1) & 1;
+		alsa_dev->oplParams.tomtom = (val >> 2) & 1;
+		alsa_dev->oplParams.snare = (val >> 3) & 1;
+		alsa_dev->oplParams.bass = (val >> 4) & 1;
+		alsa_dev->oplParams.rhythm = (val >> 5) & 1;
+		alsa_dev->oplParams.vib_depth = (val >> 6) & 1;
+		alsa_dev->oplParams.am_depth = (val >> 7) & 1;
 		paramsDirty = true;
 	}
 	else if ((reg & 0xf0) == 0xa0)
 	{
 		/* Channel Freq (low 8 bits) */
-		dev->oplChannels[reg & 0xf].fnum = (dev->oplChannels[reg & 0xf].fnum & 0x300) | (val & 0xff);
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&dev->oplChannels[reg & 0xf]);
+		alsa_dev->oplChannels[reg & 0xf].fnum = (alsa_dev->oplChannels[reg & 0xf].fnum & 0x300) | (val & 0xff);
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[reg & 0xf]);
 	}
 	else if ((reg & 0xf0) == 0xb0)
 	{
 		/* Channel freq (high 3 bits) */
-		dev->oplChannels[reg & 0xf].fnum = (dev->oplChannels[reg & 0xf].fnum & 0xff) | ((val << 8) & 0x300);
-		dev->oplChannels[reg & 0xf].octave = (val >> 2) & 7;
-		dev->oplChannels[reg & 0xf].key_on = (val >> 5) & 1;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&dev->oplChannels[reg & 0xf]);
+		alsa_dev->oplChannels[reg & 0xf].fnum = (alsa_dev->oplChannels[reg & 0xf].fnum & 0xff) | ((val << 8) & 0x300);
+		alsa_dev->oplChannels[reg & 0xf].octave = (val >> 2) & 7;
+		alsa_dev->oplChannels[reg & 0xf].key_on = (val >> 5) & 1;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[reg & 0xf]);
 	}
 	else if ((reg & 0xf0) == 0xc0)
 	{
@@ -81,58 +84,58 @@ void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 		int oper = operTbl[reg & 0xf];
 		if (oper >= 18)
 			return;
-		dev->oplOperators[oper].connection = (val)&1;
-		dev->oplOperators[oper + 3].connection = (val)&1;
-		dev->oplOperators[oper].feedback = (val >> 1) & 7;
-		dev->oplOperators[oper + 3].feedback = (val >> 1) & 7;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].connection = (val)&1;
+		alsa_dev->oplOperators[oper + 3].connection = (val)&1;
+		alsa_dev->oplOperators[oper].feedback = (val >> 1) & 7;
+		alsa_dev->oplOperators[oper + 3].feedback = (val >> 1) & 7;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0x20)
 	{
 		int oper = regToOper[reg & 0x1f];
 		if (oper == -1)
 			return;
-		dev->oplOperators[oper].harmonic = val & 0xf;
-		dev->oplOperators[oper].kbd_scale = (val >> 4) & 1;
-		dev->oplOperators[oper].do_sustain = (val >> 5) & 1;
-		dev->oplOperators[oper].vibrato = (val >> 6) & 1;
-		dev->oplOperators[oper].am = (val >> 7) & 1;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].harmonic = val & 0xf;
+		alsa_dev->oplOperators[oper].kbd_scale = (val >> 4) & 1;
+		alsa_dev->oplOperators[oper].do_sustain = (val >> 5) & 1;
+		alsa_dev->oplOperators[oper].vibrato = (val >> 6) & 1;
+		alsa_dev->oplOperators[oper].am = (val >> 7) & 1;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0x40)
 	{
 		int oper = regToOper[reg & 0x1f];
 		if (oper == -1)
 			return;
-		dev->oplOperators[oper].volume = ~val & 0x3f;
-		dev->oplOperators[oper].scale_level = (val >> 6) & 3;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].volume = ~val & 0x3f;
+		alsa_dev->oplOperators[oper].scale_level = (val >> 6) & 3;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0x60)
 	{
 		int oper = regToOper[reg & 0x1f];
 		if (oper == -1)
 			return;
-		dev->oplOperators[oper].decay = val & 0xf;
-		dev->oplOperators[oper].attack = (val >> 4) & 0xf;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].decay = val & 0xf;
+		alsa_dev->oplOperators[oper].attack = (val >> 4) & 0xf;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0x80)
 	{
 		int oper = regToOper[reg & 0x1f];
 		if (oper == -1)
 			return;
-		dev->oplOperators[oper].release = val & 0xf;
-		dev->oplOperators[oper].sustain = (val >> 4) & 0xf;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].release = val & 0xf;
+		alsa_dev->oplOperators[oper].sustain = (val >> 4) & 0xf;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0xe0)
 	{
 		int oper = regToOper[reg & 0x1f];
 		if (oper == -1)
 			return;
-		dev->oplOperators[oper].waveform = val & 0x3;
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&dev->oplOperators[oper]);
+		alsa_dev->oplOperators[oper].waveform = val & 0x3;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else
 	{
@@ -141,7 +144,7 @@ void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 	}
 
 	if (paramsDirty)
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_PARAMS, (void *)&dev->oplParams);
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_PARAMS, (void *)&alsa_dev->oplParams);
 }
 
 /* Find an OPL2 hwdep device to use as the default. */
@@ -169,7 +172,7 @@ static const char *findHwDep()
 	return hwdep_name;
 }
 
-static void setupStructs(oplhw_device *dev)
+static void setupStructs(oplhw_alsa_device *dev)
 {
 	memset(&dev->oplParams, 0, sizeof(dev->oplParams));
 	memset(dev->oplOperators, 0, sizeof(dev->oplOperators));
@@ -189,10 +192,20 @@ static void setupStructs(oplhw_device *dev)
 	}
 }
 
-oplhw_device *oplhw_OpenDevice(const char *dev_name)
+void oplhw_alsa_CloseDevice(oplhw_device *dev)
+{
+	oplhw_alsa_device *alsa_dev = (oplhw_alsa_device *)dev;
+	snd_hwdep_close(alsa_dev->oplHwDep);
+	free(alsa_dev);
+}
+
+oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name)
 {
 	bool should_free_name = false;
-	oplhw_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_alsa_device *dev = calloc(sizeof(*dev), 1);
+
+	dev->dev.close = &oplhw_alsa_CloseDevice;
+	dev->dev.write = &oplhw_alsa_Write;
 
 	/* If we don't have a dev_name, attempt to find one. */
 	if (!dev_name || !dev_name[0])
@@ -207,6 +220,7 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 		if (should_free_name)
 			free((char*)dev_name);
 		/* TODO: Report errors properly. */
+		free(dev);
 		return NULL;
 	}
 	
@@ -219,6 +233,7 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 	if (snd_hwdep_info(dev->oplHwDep, info))
 	{
 		/* TODO: Report errors properly. */
+		free(dev);
 		return NULL;
 	}
 
@@ -231,11 +246,5 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 
 	setupStructs(dev);
 
-	return dev;
-}
-
-void oplhw_CloseDevice(oplhw_device *dev)
-{
-	snd_hwdep_close(dev->oplHwDep);
-	free(dev);
+	return (oplhw_device *)dev;
 }
