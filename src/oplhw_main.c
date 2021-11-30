@@ -30,13 +30,34 @@ void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 	dev->write(dev, reg, val);
 }
 
+static const char* get_protocol_path(const char *prefix, const char *path)
+{
+	size_t prefix_len = strlen(prefix);
+	if (strncmp(path, prefix, prefix_len) == 0)
+		return path + prefix_len;
+	return NULL;
+}
+
 oplhw_device *oplhw_OpenDevice(const char *dev_name)
 {
 	oplhw_device *dev = NULL;
-	if (dev = oplhw_retrowave_OpenDevice(dev_name))
+	const char *relative_dev_name;
+	if (relative_dev_name = get_protocol_path("retrowave:", dev_name))
+	{
+		if (dev = oplhw_retrowave_OpenDevice(relative_dev_name))
+			return dev;
+		return NULL;
+	}
+	else if (relative_dev_name = get_protocol_path("alsa:", dev_name))
+	{
+		if (dev = oplhw_alsa_OpenDevice(relative_dev_name))
+			return dev;
+	}
+	else if (dev = oplhw_alsa_OpenDevice(dev_name))
+	{
+		/* Fallback to ALSA by default. */
 		return dev;
-	if (dev = oplhw_alsa_OpenDevice(dev_name))
-		return dev;
+	}
 
 	return NULL;
 }
