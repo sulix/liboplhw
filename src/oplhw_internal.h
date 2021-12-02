@@ -30,6 +30,7 @@ typedef struct oplhw_device
 } oplhw_device;
 
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name);
+oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name);
 oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name);
 
 #endif

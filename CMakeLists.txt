@@ -19,6 +19,7 @@ add_library(oplhw
 	include/oplhw.h
 	src/oplhw_internal.h
 	src/oplhw_retrowave.c
+	src/oplhw_ioport.c
 	src/oplhw_alsa.c
 	src/oplhw_main.c
 )
