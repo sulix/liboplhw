@@ -53,6 +53,13 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 		if (dev = oplhw_ioport_OpenDevice(relative_dev_name))
 			return dev;
 	}
+#ifdef WITH_OPLHW_MODULE_LPT
+	else if (relative_dev_name = get_protocol_path("opl2lpt:", dev_name))
+	{
+		if (dev = oplhw_lpt_OpenDevice(relative_dev_name))
+			return dev;
+	}
+#endif
 	else if (relative_dev_name = get_protocol_path("alsa:", dev_name))
 	{
 		if (dev = oplhw_alsa_OpenDevice(relative_dev_name))

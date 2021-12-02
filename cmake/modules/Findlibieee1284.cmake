@@ -1,0 +1,26 @@
+# Look for libieee1284:
+# See: https://github.com/twaugh/libieee1284
+# and: http://cyberelk.net/tim/libieee1284/interface/
+
+find_package(PkgConfig)
+pkg_check_modules(PC_LIBIEEE1284 QUIET libieee1284)
+set(LIBIEEE1284_DEFINITIONS ${PC_LIBIEEE1284_CFLAGS_OTHER})
+
+find_path(LIBIEEE1284_INCLUDE_DIR ieee1284.h
+	HINTS ${PC_LIBIEEE1284_INCLUDEDIR} ${PC_LIBIEEE1284_INCLUDE_DIRS}
+)
+
+find_library(LIBIEEE1284_LIBRARY NAMES ieee1284
+	HINTS ${PC_LIBIEEE1284_LIBDIR} ${PC_LIBIEEE1284_LIBRARY_DIRS}
+)
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(libieee1284 DEFAULT_MSG
+	LIBIEEE1284_LIBRARY LIBIEEE1284_INCLUDE_DIR
+)
+
+mark_as_advanced(LIBIEEE1284_LIBRARY LIBIEEE1284_INCLUDE_DIR)
+
+set(LIBIEEE1284_LIBRARIES ${LIBIEEE1284_LIBRARY})
+set(LIBIEEE1284_INCLUDE_DIRS ${LIBIEEE1284_INCLUDE_DIR})

@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: 0BSD
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 cmake_minimum_required(VERSION 3.12.0)
 
@@ -12,8 +13,26 @@ project(oplhw
 include(GNUInstallDirs)
 
 find_package(ALSA REQUIRED)
+find_package(libieee1284)
 
 option(BUILD_SHARED_LIBS "Build as a shared library (.so)." OFF)
+
+if (LIBIEEE1284_FOUND)
+	set(OPLHW_MODULE_SOURCES
+		${OPLHW_MODULES_SOURCES}
+		src/oplhw_lpt.c
+	)
+	set(OPLHW_MODULE_INCLUDE_DIRS
+		${OPLHW_MODULE_INCLUDE_DIRS}
+		${LIBIEEE1284_INCLUDE_DIRS}
+	)
+	set(OPLHW_MODULE_LIBRARIES
+		${OPLHW_MODULE_LIBRARIES}
+		${LIBIEEE1284_LIBRARY}
+	)
+	add_definitions(-DWITH_OPLHW_MODULE_LPT=1)
+endif()
+
 
 add_library(oplhw
 	include/oplhw.h
@@ -21,6 +40,7 @@ add_library(oplhw
 	src/oplhw_retrowave.c
 	src/oplhw_ioport.c
 	src/oplhw_alsa.c
+	${OPLHW_MODULE_SOURCES}
 	src/oplhw_main.c
 )
 
@@ -28,9 +48,10 @@ target_include_directories(oplhw
 	PUBLIC "include/"
 	PRIVATE "include/"
 	PRIVATE ${ALSA_INCLUDE_DIRS}
+	PRIVATE ${OPLHW_MODULE_INCLUDE_DIRS}
 )
 
-target_link_libraries(oplhw ${ALSA_LIBRARY})
+target_link_libraries(oplhw ${ALSA_LIBRARY} ${OPLHW_MODULE_LIBRARIES})
 
 
 # pkg-config
