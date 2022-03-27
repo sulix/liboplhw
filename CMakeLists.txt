@@ -78,13 +78,23 @@ install(FILES
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
-# Examples
+# Examples:
+
+# IMF Player:
 add_executable(oplhw_imfplay
 	examples/imfplay.c
 )
 
 target_link_libraries(oplhw_imfplay oplhw)
 
+# CMF Player:
+add_executable(oplhw_cmfplay
+	examples/cmfplay.c
+)
+
+target_link_libraries(oplhw_cmfplay oplhw m)
+
 if (OPLHW_INSTALL_EXAMPLES)
 	install(TARGETS oplhw_imfplay)
+	install(TARGETS oplhw_cmfplay)
 endif()
