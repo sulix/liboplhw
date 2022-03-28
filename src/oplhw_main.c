@@ -15,9 +15,11 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define _GNU_SOURCE
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "oplhw.h"
@@ -42,6 +44,17 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 {
 	oplhw_device *dev = NULL;
 	const char *relative_dev_name;
+
+	/* Default to the device in $OPLHW_DEVICE if none specified. */
+	if (!dev_name || !*dev_name)
+	{
+#ifdef HAVE_SECURE_GETENV
+		dev_name = secure_getenv("OPLHW_DEVICE");
+#else
+		dev_name = getenv("OPLHW_DEVICE");
+#endif
+	}
+
 	if (relative_dev_name = get_protocol_path("retrowave:", dev_name))
 	{
 		if (dev = oplhw_retrowave_OpenDevice(relative_dev_name))

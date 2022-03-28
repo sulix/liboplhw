@@ -11,11 +11,18 @@ project(oplhw
 )
 
 include(GNUInstallDirs)
+include(CheckFunctionExists)
 
 find_package(ALSA REQUIRED)
 find_package(libieee1284)
 
 option(BUILD_SHARED_LIBS "Build as a shared library (.so)." OFF)
+
+check_function_exists(secure_getenv HAVE_SECURE_GETENV)
+if (HAVE_SECURE_GETENV)
+	add_definitions(-DHAVE_SECURE_GETENV)
+endif()
+
 
 if (LIBIEEE1284_FOUND)
 	set(OPLHW_MODULE_SOURCES
@@ -64,7 +71,6 @@ install(TARGETS oplhw
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-message(STATUS "Install dir: ${CMAKE_INSTALL_INCLUDEDIR}")
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(FILES
