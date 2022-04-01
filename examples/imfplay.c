@@ -23,7 +23,7 @@
 
 #include "oplhw.h"
 
-#define IMFRATE 570
+#define IMFRATE 560
 
 typedef struct IMFPacket {
 	uint8_t reg;
@@ -61,6 +61,7 @@ int main(int argc, char **argv)
 	if (!dev)
 	{
 		fprintf(stderr, "Couldn't open OPL2 device \"%s\"\n", devname);
+		fclose(f);
 		return -3;
 	}
 
@@ -68,7 +69,14 @@ int main(int argc, char **argv)
 	 * unless the length is 0.
 	 */
 	uint16_t len;
-	fread(&len, sizeof(len), 1, f);
+	if (fread(&len, sizeof(len), 1, f) != 1)
+	{
+		fprintf(stderr, "Couldn't read a length from \"%s\"!\n", filename);
+		oplhw_CloseDevice(dev);
+		fclose(f);
+		return -4;
+	}
+
 	if (len == 0)
 		fseek(f, 0, SEEK_SET);
 
@@ -76,7 +84,13 @@ int main(int argc, char **argv)
 	while (!feof(f))
 	{
 		IMFPacket p;
-		fread(&p, sizeof(p), 1, f);
+		if (fread(&p, sizeof(p), 1, f) != 1)
+		{
+			fprintf(stderr, "Couldn't read a packet from \"%s\"!\n", filename);
+			oplhw_CloseDevice(dev);
+			fclose(f);
+			return -5;
+		}
 
 #ifdef DEBUG
 		printf("reg = %x, val = %x, delay = %x (%d ms)\n", p.reg, p.val, p.delay, p.delay*1000/IMFRATE);
@@ -84,6 +98,11 @@ int main(int argc, char **argv)
 		oplhw_Write(dev, p.reg, p.val);
 		if (p.delay)
 			usleep(p.delay*1000000/IMFRATE);
+
+		/* This'll underflow for type-0 files. */
+		len -= sizeof(IMFPacket);
+		if (!len)
+			break;
 	}
 
 	oplhw_CloseDevice(dev);
