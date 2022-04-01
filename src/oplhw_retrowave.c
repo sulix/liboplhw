@@ -46,6 +46,7 @@ static void retrowave_write_pkt(oplhw_retrowave_device *dev, uint8_t *bytes, siz
 	int out_offset = 1;
 	uint16_t buffer = 0;
 	int bits_buffered = 0;
+	int bytes_written = 0;
 
 	packed[0] = '\0';
 	for(int i = 0; i < len; ++i)
@@ -75,7 +76,13 @@ static void retrowave_write_pkt(oplhw_retrowave_device *dev, uint8_t *bytes, siz
 
 	packed[out_offset++] = 0x02;
 
-	write(dev->fd, packed, out_offset);
+	while (bytes_written < out_offset)
+	{
+		ssize_t res = write(dev->fd, &packed[bytes_written], out_offset - bytes_written);
+		if (res < 0)
+			return;
+		bytes_written += res;
+	}
 }
 
 void oplhw_retrowave_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
