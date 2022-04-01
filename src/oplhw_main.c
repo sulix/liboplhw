@@ -73,6 +73,11 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 			return dev;
 	}
 #endif
+	else if (relative_dev_name = get_protocol_path("imfwrite:", dev_name))
+	{
+		if (dev = oplhw_imfwrite_OpenDevice(relative_dev_name))
+			return dev;
+	}
 	else if (relative_dev_name = get_protocol_path("alsa:", dev_name))
 	{
 		if (dev = oplhw_alsa_OpenDevice(relative_dev_name))

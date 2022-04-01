@@ -46,6 +46,7 @@ add_library(oplhw
 	src/oplhw_internal.h
 	src/oplhw_retrowave.c
 	src/oplhw_ioport.c
+	src/oplhw_imfwrite.c
 	src/oplhw_alsa.c
 	${OPLHW_MODULE_SOURCES}
 	src/oplhw_main.c
