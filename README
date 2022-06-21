@@ -1,15 +1,17 @@
-oplhw: A library for using real OPL2 synth chips via ALSA's hwdep interface
-===========================================================================
+liboplhw: A library for using real OPL2 synth chips
+===================================================
 
-liboplhw is a library which provides access to OPL2 chips via this hwdep
-interface. It converts raw OPL2 register writes into the appropriate ALSA hwdep
-ioctl calls. This allows it to easily be used as a drop in replacement for OPL2
-emulators.
+liboplhw is a library which provides access to real OPL2 chips on a number of
+different hardware/software platforms:
+- The OPL2LPT parallel port OPL2 soundcard
+- The Retrowave OPL USB soundcard
+- Any OPL2 soundcard supported by the Linux kernel via ALSA
+- Retro soundcards via direct I/O port access (as root)
 
 Note that, unlike many other projects which provide direct access to the OPL2
-under Linux, oplhw does not require access to the direct I/O ports, and so
-applications do not need to run as root (so long as the user has permission to
-access the sound card, e.g. by being in the audio group).
+under Linux, liboplhw's ALSA backend does not require access to the direct I/O
+ports, and so applications do not need to run as root (so long as the user has
+permission to access the sound card, e.g. by being in the audio group).
 
 liboplhw can be built as a static library (default), as a shared library (with
 cmake -DBUILD_SHARED_LIBS=ON), or the files can be included directly in your
@@ -39,13 +41,31 @@ To install liboplhw, configure it with CMake, then make install.
 Finding the device name
 -----------------------
 
-To find the device name to use on your system, you'll need the 'card' and
-'hwdep' numbers for your device. The card number is the index of the soundcard
-(you can often find it in `aplay -l`), and the hwdep number is almost always 0.
-To make sure, just look in /proc/asound/hwdep and look for an entry titled
-"OPL3 FM" or "OPL2 FM". The card number and hwdep number will be printed
-beforehand. The device name is then just "hw:${card},${hwdep}". For example,
-"hw:0,0".
+liboplhw supports a number of different protocols, each with their own URI
+scheme.
+
+For ALSA devices, to find the device name to use on your system, you'll need the
+'card' and 'hwdep' numbers for your device. The card number is the index of the
+soundcard (you can often find it in `aplay -l`), and the hwdep number is almost
+always 0.  To make sure, just look in /proc/asound/hwdep and look for an entry
+titled "OPL3 FM" or "OPL2 FM". The card number and hwdep number will be printed
+beforehand. The device name is then just "alsa:hw:${card},${hwdep}". For
+example, "alsa:hw:0,0". You can also leave the device name as "alsa:" to pick
+the first available OPL2/3 FM synth.
+
+For OPL2LPT parallel port devices, you use the URI scheme "opl2lpt:", followed
+by the name of the parallel port. For example, "opl2lpt:parport0". OPL3LPT
+devices should work as well, but will only operate in OPL2 mode.
+
+For Retrowave OPL USB devices, use "retrowave:" followed by the path to the
+serial device, such as "retrowave:/dev/ttyACM0".
+
+To use raw I/O port access (not recommended), use the "ioport:" device. You'll
+need to run as root, or otherwise have I/O access (which may be disabled
+entirely on some kernels, particularly if secure boot is enabled). If your
+soundcard's OPL port is not the standard (388h), you can provide another in
+hex, such as "ioport:c050" for the C-Media CMI8738. PCI(e) soundcards usually
+have their FM ports at their base address plus 50h.
 
 Using the API
 -------------
@@ -53,7 +73,8 @@ Using the API
 You can use liboplhw really easily. There are only three functions to worry about:
 
 * oplhw_OpenDevice(const char *dev_name)
-	Opens an OPL2 device. Returns an oplhw_device pointer, and accepts the ALSA hwdep name as input.
+	Opens an OPL2 device. Returns an oplhw_device pointer, and accepts the
+	device name as input.
 * oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
 	Writes the byte val to OPL2 register reg on device dev
 * oplhw_CloseDevice(oplhw_device *dev)
