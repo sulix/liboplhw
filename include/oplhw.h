@@ -18,6 +18,8 @@
 #ifndef OPLHW_H
 #define OPLHW_H
 
+#include <stdint.h>
+
 typedef struct oplhw_device oplhw_device;
 
 #ifdef __cplusplus
