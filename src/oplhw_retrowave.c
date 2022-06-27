@@ -85,10 +85,11 @@ static void retrowave_write_pkt(oplhw_retrowave_device *dev, uint8_t *bytes, siz
 	}
 }
 
-void oplhw_retrowave_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_retrowave_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	oplhw_retrowave_device *rw_dev = (oplhw_retrowave_device *)dev;
-	uint8_t pkt[] = {0x42, 0x12, 0xE1, reg, 0xE3, val, 0xFB, val};
+	bool port = (reg & 0x100); /* Are we outputting to the 2nd port on OPL3? */
+	uint8_t pkt[] = {0x42, 0x12, port ? 0xE5 : 0xE1, reg & 0xFF, 0xE3, val, 0xFB, val};
 	retrowave_write_pkt(rw_dev, pkt, sizeof(pkt));
 
 }
@@ -107,6 +108,9 @@ oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name)
 
 	dev->dev.close = &oplhw_retrowave_CloseDevice;
 	dev->dev.write = &oplhw_retrowave_Write;
+	
+	/* All RetroWave OPL3s are, indeed, OPL3s */
+	dev->dev.isOPL3 = true;
 
 	dev->fd = open(dev_name, O_RDWR);
 

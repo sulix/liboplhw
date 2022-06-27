@@ -25,11 +25,31 @@
 #include "oplhw.h"
 #include "oplhw_internal.h"
 
+bool oplhw_IsOPL3(oplhw_device *dev)
+{
+	return dev->isOPL3;
+}
 
-
-void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	dev->write(dev, reg, val);
+}
+
+void oplhw_Reset(oplhw_device *dev)
+{
+	/* NOTE: This resets an OPL3 back to OPL2 mode! */
+	for (int i = 0; i < 256; ++i)
+	{
+		dev->write(dev, i, 0x00);
+	}
+	
+	if (dev->isOPL3)
+	{
+		for (int i = 0x100; i < 0x1FF; ++i)
+		{
+			dev->write(dev, i, 0x00);
+		}
+	}
 }
 
 static const char* get_protocol_path(const char *prefix, const char *path)
@@ -69,7 +89,12 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 #ifdef WITH_OPLHW_MODULE_LPT
 	else if (relative_dev_name = get_protocol_path("opl2lpt:", dev_name))
 	{
-		if (dev = oplhw_lpt_OpenDevice(relative_dev_name))
+		if (dev = oplhw_lpt_OpenDevice(relative_dev_name, false))
+			return dev;
+	}
+	else if (relative_dev_name = get_protocol_path("opl3lpt:", dev_name))
+	{
+		if (dev = oplhw_lpt_OpenDevice(relative_dev_name, true))
 			return dev;
 	}
 #endif

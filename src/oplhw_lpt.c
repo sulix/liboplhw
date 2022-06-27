@@ -37,14 +37,23 @@ typedef struct oplhw_lpt_device
 } oplhw_lpt_device;
 
 
-void oplhw_lpt_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_lpt_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	oplhw_lpt_device *lpt_dev = (oplhw_lpt_device *)dev;
 
-	ieee1284_write_data(lpt_dev->parport, reg);
-	ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
-	ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NSTROBE) ^ C1284_INVERTED);
-	ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
+	ieee1284_write_data(lpt_dev->parport, reg & 0xFF);
+	if (reg & 0x100)
+	{
+		ieee1284_write_control(lpt_dev->parport, (C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
+		ieee1284_write_control(lpt_dev->parport, (C1284_NSTROBE) ^ C1284_INVERTED);
+		ieee1284_write_control(lpt_dev->parport, (C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
+	}
+	else
+	{
+		ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
+		ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NSTROBE) ^ C1284_INVERTED);
+		ieee1284_write_control(lpt_dev->parport, (C1284_NSELECTIN | C1284_NINIT | C1284_NSTROBE) ^ C1284_INVERTED);
+	}
 	usleep(4);
 
 	ieee1284_write_data(lpt_dev->parport, val);
@@ -62,7 +71,7 @@ void oplhw_lpt_CloseDevice(oplhw_device *dev)
 	free(lpt_dev);
 }
 
-oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name)
+oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 {
 	oplhw_lpt_device *dev = calloc(sizeof(*dev), 1);
 	struct parport_list all_ports = {};
@@ -70,6 +79,7 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name)
 
 	dev->dev.close = &oplhw_lpt_CloseDevice;
 	dev->dev.write = &oplhw_lpt_Write;
+	dev->dev.isOPL3 = isOPL3;
 
 	if (ieee1284_find_ports(&all_ports, 0) != E1284_OK)
 	{

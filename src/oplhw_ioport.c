@@ -47,13 +47,23 @@ static void ioport_WritePort(oplhw_ioport_device *io_dev, int port, uint8_t val)
 #endif
 }
 
-void oplhw_ioport_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_ioport_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	oplhw_ioport_device *io_dev = (oplhw_ioport_device *)dev;
-	ioport_WritePort(io_dev, 0, reg);
-	usleep(10);
-	ioport_WritePort(io_dev, 1, val);
-	usleep(30);
+	if (reg & 0x100)
+	{
+		ioport_WritePort(io_dev, 2, reg);
+		usleep(10);
+		ioport_WritePort(io_dev, 3, val);
+		usleep(30);
+	}
+	else
+	{
+		ioport_WritePort(io_dev, 0, reg);
+		usleep(10);
+		ioport_WritePort(io_dev, 1, val);
+		usleep(30);
+	}
 }
 
 void oplhw_ioport_CloseDevice(oplhw_device *dev)
@@ -96,9 +106,18 @@ oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 	}
 #endif
 
-	/* Diasble OPL3 mode. */
-	ioport_WritePort(dev, 2, 0x05);
-	ioport_WritePort(dev, 3, 0x00);
+	/* Attempt to detect an OPL3. */
+	uint8_t reg0 = 0;
+#ifndef USE_DEV_PORT
+	reg0 = inb(dev->iobase + 0);
+#else
+	lseek(dev->devport_fd, io_dev->iobase + 0, SEEK_SET);
+	read(dev->devport_fd, &reg0, 1);
+#endif
+	if (reg0 & 0x06)
+		dev->dev.isOPL3 = false;
+	else
+		dev->dev.isOPL3 = true;
 
 	/* And reset. */
 	for (int i = 0; i < 256; ++i)

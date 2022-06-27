@@ -25,8 +25,9 @@
 
 typedef struct oplhw_device
 {
-	void (*close)(oplhw_device *dev);
-	void (*write)(oplhw_device *dev, uint8_t reg, uint8_t val);
+	bool isOPL3;
+	void (*close)(struct oplhw_device *dev);
+	void (*write)(struct oplhw_device *dev, uint16_t reg, uint8_t val);
 } oplhw_device;
 
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name);

@@ -79,6 +79,8 @@ int main(int argc, char **argv)
 
 	if (len == 0)
 		fseek(f, 0, SEEK_SET);
+	
+	oplhw_Reset(dev);
 
 	/* Keep reading until end of file. This will break if there are tags.*/
 	while (!feof(f))

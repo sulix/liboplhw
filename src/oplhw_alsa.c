@@ -42,7 +42,7 @@ const int regToOper[0x20] =
 	{0, 1, 2, 3, 4, 5, -1, -1, 6, 7, 8, 9, 10, 11, -1, -1,
 		12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-void oplhw_alsa_Write(oplhw_device *dev, uint8_t reg, uint8_t val)
+void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	oplhw_alsa_device *alsa_dev = (oplhw_alsa_device *)dev;
 	bool paramsDirty = false;
@@ -240,10 +240,19 @@ oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name)
 	int interface = snd_hwdep_info_get_iface(info);
 
 	if (interface == SND_HWDEP_IFACE_OPL2)
+	{
 		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL2);
+		dev->dev.isOPL3 = false;
+	}
 	else if (interface == SND_HWDEP_IFACE_OPL3)
+	{
 		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL3);
+		dev->dev.isOPL3 = true;
+	}
 
+	/* HACK: Disable OPL3 support for ALSA, as we don't fully implement it yet. */
+	dev->dev.isOPL3 = false;
+	
 	setupStructs(dev);
 
 	return (oplhw_device *)dev;

@@ -18,6 +18,7 @@
 #ifndef OPLHW_H
 #define OPLHW_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct oplhw_device oplhw_device;
@@ -28,7 +29,9 @@ extern "C" {
 
 oplhw_device *oplhw_OpenDevice(const char *dev_name);
 void oplhw_CloseDevice(oplhw_device *dev);
-void oplhw_Write(oplhw_device *dev, uint8_t reg, uint8_t val);
+void oplhw_Write(oplhw_device *dev, uint16_t reg, uint8_t val);
+bool oplhw_IsOPL3(oplhw_device *dev);
+void oplhw_Reset(oplhw_device *dev);
 
 #ifdef __cplusplus
 }
