@@ -14,7 +14,7 @@ include(GNUInstallDirs)
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 
-find_package(ALSA REQUIRED)
+find_package(ALSA)
 find_package(libieee1284)
 
 option(BUILD_SHARED_LIBS "Build as a shared library (.so)." ON)
@@ -39,34 +39,42 @@ endif()
 option(OPLHW_USE_LIBIEEE1284 "Use libieee1284 for OPL2LPT support." ${OPLHW_LIBIEE1284_DEFAULT})
 
 if (OPLHW_USE_LIBIEEE1284 AND LIBIEEE1284_FOUND)
-	set(OPLHW_MODULE_SOURCES
-		${OPLHW_MODULES_SOURCES}
+	list(APPEND OPLHW_MODULE_SOURCES
 		src/oplhw_lpt.c
 	)
-	set(OPLHW_MODULE_INCLUDE_DIRS
-		${OPLHW_MODULE_INCLUDE_DIRS}
+	list(APPEND OPLHW_MODULE_INCLUDE_DIRS
 		${LIBIEEE1284_INCLUDE_DIRS}
 	)
-	set(OPLHW_MODULE_LIBRARIES
-		${OPLHW_MODULE_LIBRARIES}
+	list(APPEND OPLHW_MODULE_LIBRARIES
 		${LIBIEEE1284_LIBRARY}
 	)
 	add_definitions(-DWITH_OPLHW_MODULE_LPT=1)
 elseif (HAVE_LINUX_PPDEV_H)
-	set(OPLHW_MODULE_SOURCES
+	list(APPEND OPLHW_MODULE_SOURCES
 		${OPLHW_MODULES_SOURCES}
 		src/oplhw_lpt_linux.c
 	)
 	add_definitions(-DWITH_OPLHW_MODULE_LPT=1)
 endif()
 
+if(ALSA_FOUND)
+	list(APPEND OPLHW_MODULE_SOURCES
+		src/oplhw_alsa.c
+	)
+	list(APPEND OPLHW_MODULE_INCLUDE_DIRS
+		${ALSA_INCLUDE_DIRS}
+	)
+	list(APPEND OPLHW_MODULE_LIBRARIES
+		${ALSA_LIBRARY}
+	)
+	add_definitions(-DWITH_OPLHW_MODULE_ALSA=1)
+endif()
 
 add_library(oplhw
 	include/oplhw.h
 	src/oplhw_internal.h
 	src/oplhw_retrowave.c
 	src/oplhw_ioport.c
-	src/oplhw_alsa.c
 	${OPLHW_MODULE_SOURCES}
 	src/oplhw_main.c
 )
@@ -78,7 +86,7 @@ target_include_directories(oplhw
 	PRIVATE ${OPLHW_MODULE_INCLUDE_DIRS}
 )
 
-target_link_libraries(oplhw ${ALSA_LIBRARY} ${OPLHW_MODULE_LIBRARIES})
+target_link_libraries(oplhw ${OPLHW_MODULE_LIBRARIES})
 
 
 # pkg-config
