@@ -213,6 +213,8 @@ oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name)
 		dev_name = findHwDep();
 		if (dev_name)
 			should_free_name = true;
+		else
+			return NULL;
 	}
 
 	if (snd_hwdep_open(&dev->oplHwDep, dev_name, SND_HWDEP_OPEN_WRITE) < 0)
