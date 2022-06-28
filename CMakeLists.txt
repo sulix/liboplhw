@@ -17,7 +17,7 @@ include(CheckFunctionExists)
 find_package(ALSA REQUIRED)
 find_package(libieee1284)
 
-option(BUILD_SHARED_LIBS "Build as a shared library (.so)." OFF)
+option(BUILD_SHARED_LIBS "Build as a shared library (.so)." ON)
 
 check_function_exists(secure_getenv HAVE_SECURE_GETENV)
 if (HAVE_SECURE_GETENV)
