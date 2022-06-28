@@ -11,6 +11,7 @@ project(oplhw
 )
 
 include(GNUInstallDirs)
+include(CheckIncludeFile)
 include(CheckFunctionExists)
 
 find_package(ALSA REQUIRED)
@@ -23,8 +24,21 @@ if (HAVE_SECURE_GETENV)
 	add_definitions(-DHAVE_SECURE_GETENV)
 endif()
 
+check_include_file(linux/ppdev.h HAVE_LINUX_PPDEV_H)
 
-if (LIBIEEE1284_FOUND)
+if(HAVE_LINUX_PPDEV_H)
+	set(OPLHW_LIBIEE1284_DEFAULT OFF)
+else()
+	set(OPLHW_LIBIEE1284_DEFAULT ON)
+	if(NOT LIBIEEE1284_FOUND)
+		message(WARNING "Neither Linux parallel port not libieee1284 are available.")
+		message(WARNING "OPL2LPT will not be supported.")
+	endif()
+endif()
+
+option(OPLHW_USE_LIBIEEE1284 "Use libieee1284 for OPL2LPT support." ${OPLHW_LIBIEE1284_DEFAULT})
+
+if (OPLHW_USE_LIBIEEE1284 AND LIBIEEE1284_FOUND)
 	set(OPLHW_MODULE_SOURCES
 		${OPLHW_MODULES_SOURCES}
 		src/oplhw_lpt.c
@@ -36,6 +50,12 @@ if (LIBIEEE1284_FOUND)
 	set(OPLHW_MODULE_LIBRARIES
 		${OPLHW_MODULE_LIBRARIES}
 		${LIBIEEE1284_LIBRARY}
+	)
+	add_definitions(-DWITH_OPLHW_MODULE_LPT=1)
+elseif (HAVE_LINUX_PPDEV_H)
+	set(OPLHW_MODULE_SOURCES
+		${OPLHW_MODULES_SOURCES}
+		src/oplhw_lpt_linux.c
 	)
 	add_definitions(-DWITH_OPLHW_MODULE_LPT=1)
 endif()

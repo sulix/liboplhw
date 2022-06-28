@@ -32,7 +32,7 @@ typedef struct oplhw_device
 
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name);
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name);
-oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name);
+oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3);
 oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name);
 
 #endif
