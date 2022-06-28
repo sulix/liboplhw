@@ -55,6 +55,8 @@ void oplhw_Reset(oplhw_device *dev)
 static const char* get_protocol_path(const char *prefix, const char *path)
 {
 	size_t prefix_len = strlen(prefix);
+	if (!path)
+		return NULL;
 	if (strncmp(path, prefix, prefix_len) == 0)
 		return path + prefix_len;
 	return NULL;
