@@ -26,6 +26,8 @@ endif()
 
 check_include_file(linux/ppdev.h HAVE_LINUX_PPDEV_H)
 
+check_function_exists(ioperm HAVE_IOPERM)
+
 if(HAVE_LINUX_PPDEV_H)
 	set(OPLHW_LIBIEE1284_DEFAULT OFF)
 else()
@@ -70,11 +72,30 @@ if(ALSA_FOUND)
 	add_definitions(-DWITH_OPLHW_MODULE_ALSA=1)
 endif()
 
+if(HAVE_IOPERM)
+	list(APPEND OPLHW_MODULE_SOURCES
+		src/oplhw_ioport.c
+	)
+	add_definitions(-DWITH_OPLHW_MODULE_IOPORT=1)
+elseif(UNIX)
+	list(APPEND OPLHW_MODULE_SOURCES
+		src/oplhw_ioport.c
+	)
+	add_definitions(-DWITH_OPLHW_MODULE_IOPORT=1
+			-DUSE_DEV_PORT=1)
+endif()
+
+
+# For now, we always have RetroWave support, as it just requires basic posix file I/O.
+list(APPEND OPLHW_MODULE_SOURCES
+	src/oplhw_retrowave.c
+)
+add_definitions(-DWITH_OPLHW_MODULE_RETROWAVE=1)
+
+
 add_library(oplhw
 	include/oplhw.h
 	src/oplhw_internal.h
-	src/oplhw_retrowave.c
-	src/oplhw_ioport.c
 	${OPLHW_MODULE_SOURCES}
 	src/oplhw_main.c
 )

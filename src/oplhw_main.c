@@ -77,17 +77,21 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 #endif
 	}
 
+#ifdef WITH_OPLHW_MODULE_RETROWAVE
 	if (relative_dev_name = get_protocol_path("retrowave:", dev_name))
 	{
 		if (dev = oplhw_retrowave_OpenDevice(relative_dev_name))
 			return dev;
 		return NULL;
 	}
+#endif
+#ifdef WITH_OPLHW_MODULE_IOPORT
 	else if (relative_dev_name = get_protocol_path("ioport:", dev_name))
 	{
 		if (dev = oplhw_ioport_OpenDevice(relative_dev_name))
 			return dev;
 	}
+#endif
 #ifdef WITH_OPLHW_MODULE_LPT
 	else if (relative_dev_name = get_protocol_path("opl2lpt:", dev_name))
 	{
@@ -100,6 +104,7 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 			return dev;
 	}
 #endif
+#ifdef WITH_OPLHW_MODULE_ALSA
 	else if (relative_dev_name = get_protocol_path("alsa:", dev_name))
 	{
 		if (dev = oplhw_alsa_OpenDevice(relative_dev_name))
@@ -110,6 +115,7 @@ oplhw_device *oplhw_OpenDevice(const char *dev_name)
 		/* Fallback to ALSA by default. */
 		return dev;
 	}
+#endif
 
 	return NULL;
 }
