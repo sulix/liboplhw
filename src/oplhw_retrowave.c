@@ -89,7 +89,7 @@ void oplhw_retrowave_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 {
 	oplhw_retrowave_device *rw_dev = (oplhw_retrowave_device *)dev;
 	bool port = (reg & 0x100); /* Are we outputting to the 2nd port on OPL3? */
-	uint8_t pkt[] = {0x42, 0x12, port ? 0xE5 : 0xE1, reg & 0xFF, 0xE3, val, 0xFB, val};
+	uint8_t pkt[] = {0x42, 0x12, port ? 0xE5 : 0xE1, reg & 0xFF, port ? 0xE7 : 0xE3, val, 0xFB, val};
 	retrowave_write_pkt(rw_dev, pkt, sizeof(pkt));
 
 }
