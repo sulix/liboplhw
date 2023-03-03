@@ -15,6 +15,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* For O_PATH */
+#define _GNU_SOURCE
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -85,7 +87,20 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 
 	dev->fd = open(dev_name, O_WRONLY);
 
-	if (!dev->fd)
+	/* For compatibility with libieee1284, look in /dev. */
+	if (dev->fd < 0)
+	{
+		int dir_fd = open("/dev", O_PATH | O_DIRECTORY);
+		if (dir_fd < 0)
+		{
+			free(dev);
+			return NULL;
+		}
+		dev->fd = openat(dir_fd, dev_name, O_WRONLY);
+		close(dir_fd);
+	}
+
+	if (dev->fd < 0)
 	{
 		free(dev);
 		return NULL;
