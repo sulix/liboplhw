@@ -25,7 +25,9 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#ifndef USE_DEV_PORT
 #include <sys/io.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -75,7 +77,9 @@ void oplhw_ioport_CloseDevice(oplhw_device *dev)
 		ioport_WritePort(io_dev, 0, i);
 		ioport_WritePort(io_dev, 1, 0x00);
 	}
+#ifndef USE_DEV_PORT
 	ioperm(io_dev->iobase, 4, 0);
+#endif
 }
 
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
@@ -111,7 +115,7 @@ oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 #ifndef USE_DEV_PORT
 	reg0 = inb(dev->iobase + 0);
 #else
-	lseek(dev->devport_fd, io_dev->iobase + 0, SEEK_SET);
+	lseek(dev->devport_fd, dev->iobase + 0, SEEK_SET);
 	read(dev->devport_fd, &reg0, 1);
 #endif
 	if (reg0 & 0x06)
