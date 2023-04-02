@@ -97,6 +97,7 @@ add_library(oplhw
 	include/oplhw.h
 	src/oplhw_internal.h
 	${OPLHW_MODULE_SOURCES}
+	src/oplhw_filter.c
 	src/oplhw_main.c
 )
 

@@ -27,11 +27,19 @@ typedef struct oplhw_device oplhw_device;
 extern "C" {
 #endif
 
+/* Core API */
 oplhw_device *oplhw_OpenDevice(const char *dev_name);
 void oplhw_CloseDevice(oplhw_device *dev);
 void oplhw_Write(oplhw_device *dev, uint16_t reg, uint8_t val);
 bool oplhw_IsOPL3(oplhw_device *dev);
 void oplhw_Reset(oplhw_device *dev);
+
+/* Filters */
+
+/* Create a volume filter device. */
+oplhw_device *oplhw_CreateVolumeFilter(oplhw_device *backing_dev);
+/* Set the volume. The device must be a volume filter device. */
+int oplhw_SetVolume(oplhw_device *volume_dev, int volume);
 
 #ifdef __cplusplus
 }
