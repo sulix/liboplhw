@@ -3,6 +3,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 cmake_minimum_required(VERSION 3.12.0)
 
+set(CMAKE_C_STANDARD 90)
+
 project(oplhw
 	LANGUAGES C
 	DESCRIPTION "A library for using real OPL2 synth chips via ALSA's hwdep interface."

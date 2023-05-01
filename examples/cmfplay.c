@@ -100,6 +100,7 @@ float MIDINoteToAdlib(int note, int block)
 
 void ReadHeaders(FILE *f)
 {
+	int i;
 	fread(&cmfHeader, sizeof(cmfHeader), 1, f);
 
 	/* CTMF */
@@ -121,7 +122,7 @@ void ReadHeaders(FILE *f)
 	fseek(f, cmfHeader.offInstruments, SEEK_SET);
 	fread(cmfInstruments, cmfHeader.numInstruments, sizeof(CMFInstrument), f);
 
-	for (int i = 0; i < 9; ++i)
+	for (i = 0; i < 9; ++i)
 	{
 		SetInstrumentChannel(&cmfInstruments[i], i);
 	}
@@ -234,6 +235,7 @@ int main(int argc, char **argv)
 {
 	const char *filename = argv[2];
 	const char *devname = argv[1];
+	int i;
 
 	printf("%s: A simple CMF player using liboplhw.\n", argv[0]);
 	printf("(C) 2022 David Gow\n");
@@ -263,7 +265,7 @@ int main(int argc, char **argv)
 		return -3;
 	}
 
-	for (int i = 0; i < 255; ++i)
+	for (i = 0; i < 255; ++i)
 		oplhw_Write(oplDevice, i, 0);
 	oplhw_Write(oplDevice, 0x01, 0x20);
 	oplhw_Write(oplDevice, 0x05, 0x00);

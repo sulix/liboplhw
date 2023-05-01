@@ -150,14 +150,14 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 /* Find an OPL2 hwdep device to use as the default. */
 static const char *findHwDep()
 {
-	void **hints;
+	void **hints, **current_hint;
 	const char *hwdep_name = NULL;
 	int err = snd_device_name_hint(-1, "hwdep", &hints);
 	if (err) {
 		return NULL;
 	}
 
-	for (void **current_hint = hints; *current_hint; current_hint++)
+	for (current_hint = hints; *current_hint; current_hint++)
 	{
 		const char *name = snd_device_name_get_hint(*current_hint, "NAME");
 		const char *desc = snd_device_name_get_hint(*current_hint, "DESC");
@@ -174,11 +174,13 @@ static const char *findHwDep()
 
 static void setupStructs(oplhw_alsa_device *dev)
 {
+	int i;
+	
 	memset(&dev->oplParams, 0, sizeof(dev->oplParams));
 	memset(dev->oplOperators, 0, sizeof(dev->oplOperators));
 	memset(dev->oplChannels, 0, sizeof(dev->oplChannels));
 
-	for (int i = 0; i < 18; ++i)
+	for (i = 0; i < 18; ++i)
 	{
 		dev->oplOperators[i].op = (i / 3) % 2;
 		dev->oplOperators[i].voice = (i / 6) * 3 + i % 3;
@@ -186,7 +188,7 @@ static void setupStructs(oplhw_alsa_device *dev)
 		dev->oplOperators[i].right = 1;
 	}
 
-	for (int i = 0; i < 9; ++i)
+	for (i = 0; i < 9; ++i)
 	{
 		dev->oplChannels[i].voice = i;
 	}

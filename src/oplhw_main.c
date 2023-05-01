@@ -37,15 +37,17 @@ void oplhw_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 
 void oplhw_Reset(oplhw_device *dev)
 {
+	int i;
+
 	/* NOTE: This resets an OPL3 back to OPL2 mode! */
-	for (int i = 0; i < 256; ++i)
+	for (i = 0; i < 256; ++i)
 	{
 		dev->write(dev, i, 0x00);
 	}
 	
 	if (dev->isOPL3)
 	{
-		for (int i = 0x100; i < 0x1FF; ++i)
+		for (i = 0x100; i < 0x1FF; ++i)
 		{
 			dev->write(dev, i, 0x00);
 		}

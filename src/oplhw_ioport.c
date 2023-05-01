@@ -70,9 +70,10 @@ void oplhw_ioport_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 
 void oplhw_ioport_CloseDevice(oplhw_device *dev)
 {
+	int i;
 	oplhw_ioport_device *io_dev = (oplhw_ioport_device *)dev;
 	/* Reset the device again, so we don't have hanging notes */
-	for (int i = 0; i < 256; ++i)
+	for (i = 0; i < 256; ++i)
 	{
 		ioport_WritePort(io_dev, 0, i);
 		ioport_WritePort(io_dev, 1, 0x00);
@@ -84,6 +85,7 @@ void oplhw_ioport_CloseDevice(oplhw_device *dev)
 
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 {
+	int i;
 	oplhw_ioport_device *dev = calloc(sizeof(*dev), 1);
 
 	dev->dev.close = &oplhw_ioport_CloseDevice;
@@ -124,7 +126,7 @@ oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 		dev->dev.isOPL3 = true;
 
 	/* And reset. */
-	for (int i = 0; i < 256; ++i)
+	for (i = 0; i < 256; ++i)
 	{
 		ioport_WritePort(dev, 0, i);
 		ioport_WritePort(dev, 1, 0x00);
