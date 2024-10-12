@@ -94,7 +94,6 @@ list(APPEND OPLHW_MODULE_SOURCES
 )
 add_definitions(-DWITH_OPLHW_MODULE_RETROWAVE=1)
 
-
 add_library(oplhw
 	include/oplhw.h
 	src/oplhw_internal.h
@@ -112,6 +111,11 @@ target_include_directories(oplhw
 
 target_link_libraries(oplhw ${OPLHW_MODULE_LIBRARIES})
 
+if(BUILD_SHARED_LIBS)
+	set_target_properties(oplhw PROPERTIES
+		C_VISIBILITY_PRESET hidden
+	)
+endif()
 
 # pkg-config
 configure_file(oplhw.pc.in oplhw.pc @ONLY)
