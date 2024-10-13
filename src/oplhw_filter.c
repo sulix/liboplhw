@@ -60,7 +60,7 @@ void oplhw_volume_filter_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 
 oplhw_device *oplhw_CreateVolumeFilter(oplhw_device *backing_dev)
 {
-	oplhw_volume_filter_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_volume_filter_device *dev = calloc(1, sizeof(*dev));
 	dev->dev.dev.close = oplhw_filter_CloseDevice;
 	dev->dev.dev.write = oplhw_volume_filter_Write;
 	dev->dev.next = backing_dev;

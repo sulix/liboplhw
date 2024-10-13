@@ -204,7 +204,7 @@ void oplhw_alsa_CloseDevice(oplhw_device *dev)
 oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name)
 {
 	bool should_free_name = false;
-	oplhw_alsa_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_alsa_device *dev = calloc(1, sizeof(*dev));
 
 	dev->dev.close = &oplhw_alsa_CloseDevice;
 	dev->dev.write = &oplhw_alsa_Write;

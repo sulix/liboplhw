@@ -47,7 +47,7 @@ static void retrowave_write_pkt(oplhw_retrowave_device *dev, uint8_t *bytes, siz
 	uint16_t buffer = 0;
 	int bits_buffered = 0;
 	int bytes_written = 0;
-	int i;
+	size_t i;
 
 	packed[0] = '\0';
 	for(i = 0; i < len; ++i)
@@ -105,7 +105,7 @@ void oplhw_retrowave_CloseDevice(oplhw_device *dev)
 
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name)
 {
-	oplhw_retrowave_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_retrowave_device *dev = calloc(1, sizeof(*dev));
 
 	dev->dev.close = &oplhw_retrowave_CloseDevice;
 	dev->dev.write = &oplhw_retrowave_Write;

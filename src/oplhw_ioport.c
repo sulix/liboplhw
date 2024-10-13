@@ -86,7 +86,7 @@ void oplhw_ioport_CloseDevice(oplhw_device *dev)
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 {
 	int i;
-	oplhw_ioport_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_ioport_device *dev = calloc(1, sizeof(*dev));
 
 	dev->dev.close = &oplhw_ioport_CloseDevice;
 	dev->dev.write = &oplhw_ioport_Write;

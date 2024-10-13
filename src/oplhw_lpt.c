@@ -73,7 +73,7 @@ void oplhw_lpt_CloseDevice(oplhw_device *dev)
 
 oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 {
-	oplhw_lpt_device *dev = calloc(sizeof(*dev), 1);
+	oplhw_lpt_device *dev = calloc(1, sizeof(*dev));
 	struct parport_list all_ports = {};
 	int caps = CAP1284_RAW;
 
