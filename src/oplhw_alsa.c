@@ -33,8 +33,9 @@ typedef struct oplhw_alsa_device
 {
 	oplhw_device dev;
 	snd_hwdep_t *oplHwDep;
-	struct snd_dm_fm_voice oplOperators[32];
-	struct snd_dm_fm_note oplChannels[16];
+	bool opl3Enabled;
+	struct snd_dm_fm_voice oplOperators[35];
+	struct snd_dm_fm_note oplChannels[18];
 	struct snd_dm_fm_params oplParams;
 } oplhw_alsa_device;
 
@@ -67,32 +68,50 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 	else if ((reg & 0xf0) == 0xa0)
 	{
 		/* Channel Freq (low 8 bits) */
-		alsa_dev->oplChannels[reg & 0xf].fnum = (alsa_dev->oplChannels[reg & 0xf].fnum & 0x300) | (val & 0xff);
-		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[reg & 0xf]);
+		int channel = (reg & 0xf) + ((alsa_dev->opl3Enabled && (reg & 0x100)) ? 8 : 0);
+		alsa_dev->oplChannels[channel].fnum = (alsa_dev->oplChannels[channel].fnum & 0x300) | (val & 0xff);
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[channel]);
 	}
 	else if ((reg & 0xf0) == 0xb0)
 	{
 		/* Channel freq (high 3 bits) */
-		alsa_dev->oplChannels[reg & 0xf].fnum = (alsa_dev->oplChannels[reg & 0xf].fnum & 0xff) | ((val << 8) & 0x300);
-		alsa_dev->oplChannels[reg & 0xf].octave = (val >> 2) & 7;
-		alsa_dev->oplChannels[reg & 0xf].key_on = (val >> 5) & 1;
-		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[reg & 0xf]);
+		int channel = (reg & 0xf) + ((alsa_dev->opl3Enabled && (reg & 0x100)) ? 8 : 0);
+		alsa_dev->oplChannels[channel].fnum = (alsa_dev->oplChannels[channel].fnum & 0xff) | ((val << 8) & 0x300);
+		alsa_dev->oplChannels[channel].octave = (val >> 2) & 7;
+		alsa_dev->oplChannels[channel].key_on = (val >> 5) & 1;
+		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_PLAY_NOTE, (void *)&alsa_dev->oplChannels[channel]);
 	}
 	else if ((reg & 0xf0) == 0xc0)
 	{
 		int operTbl[] = {0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 24, 25, 26, 30, 31, 32};
-		int oper = operTbl[reg & 0xf];
-		if (oper >= 18)
+		int channel = (reg & 0xf) + ((alsa_dev->opl3Enabled && (reg & 0x100)) ? 8 : 0);
+		int oper = operTbl[channel];
+		if (oper >= ((alsa_dev->opl3Enabled) ? 35 : 18))
 			return;
 		alsa_dev->oplOperators[oper].connection = (val)&1;
 		alsa_dev->oplOperators[oper + 3].connection = (val)&1;
 		alsa_dev->oplOperators[oper].feedback = (val >> 1) & 7;
 		alsa_dev->oplOperators[oper + 3].feedback = (val >> 1) & 7;
+		if (alsa_dev->opl3Enabled)
+		{
+			alsa_dev->oplOperators[oper].left = (val & 16) ? 1 : 0;
+			alsa_dev->oplOperators[oper].right = (val & 32) ? 1 : 0;
+			alsa_dev->oplOperators[oper + 3].left = (val & 16) ? 1 : 0;
+			alsa_dev->oplOperators[oper + 3].right = (val & 32) ? 1 : 0;
+		}
+		else
+		{
+			alsa_dev->oplOperators[oper].left = 1;
+			alsa_dev->oplOperators[oper].right = 1;
+			alsa_dev->oplOperators[oper + 3].left = 1;
+			alsa_dev->oplOperators[oper + 3].right = 1;
+		}
 		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
 	}
 	else if ((reg & 0xe0) == 0x20)
 	{
 		int oper = regToOper[reg & 0x1f];
+		if (alsa_dev->opl3Enabled && (reg & 0x100)) oper += 17;
 		if (oper == -1)
 			return;
 		alsa_dev->oplOperators[oper].harmonic = val & 0xf;
@@ -105,6 +124,7 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 	else if ((reg & 0xe0) == 0x40)
 	{
 		int oper = regToOper[reg & 0x1f];
+		if (alsa_dev->opl3Enabled && (reg & 0x100)) oper += 17;
 		if (oper == -1)
 			return;
 		alsa_dev->oplOperators[oper].volume = ~val & 0x3f;
@@ -114,6 +134,7 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 	else if ((reg & 0xe0) == 0x60)
 	{
 		int oper = regToOper[reg & 0x1f];
+		if (alsa_dev->opl3Enabled && (reg & 0x100)) oper += 17;
 		if (oper == -1)
 			return;
 		alsa_dev->oplOperators[oper].decay = val & 0xf;
@@ -123,6 +144,7 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 	else if ((reg & 0xe0) == 0x80)
 	{
 		int oper = regToOper[reg & 0x1f];
+		if (alsa_dev->opl3Enabled && (reg & 0x100)) oper += 17;
 		if (oper == -1)
 			return;
 		alsa_dev->oplOperators[oper].release = val & 0xf;
@@ -132,10 +154,29 @@ void oplhw_alsa_Write(oplhw_device *dev, uint16_t reg, uint8_t val)
 	else if ((reg & 0xe0) == 0xe0)
 	{
 		int oper = regToOper[reg & 0x1f];
+		if (alsa_dev->opl3Enabled && (reg & 0x100)) oper += 17;
 		if (oper == -1)
 			return;
-		alsa_dev->oplOperators[oper].waveform = val & 0x3;
+		alsa_dev->oplOperators[oper].waveform = val & (alsa_dev->opl3Enabled ? 0x7 : 0x3);
 		snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_VOICE, (void *)&alsa_dev->oplOperators[oper]);
+	}
+	else if (reg == 0x104)
+	{
+		if (alsa_dev->opl3Enabled)
+		{
+			snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_CONNECTION, (void *)(uintptr_t)val);
+		}
+		else
+		{	
+			snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_CONNECTION, (void *)0);
+		}
+	}
+	else if (reg == 0x105)
+	{
+		printf("Setting opl3 mode to %d", val);
+		alsa_dev->opl3Enabled = (val & 1) ? true : false;
+		//void *mode = (void *)(uintptr_t)((val & 1) ? SNDRV_DM_FM_MODE_OPL3 : SNDRV_DM_FM_MODE_OPL2);
+		//snd_hwdep_ioctl(alsa_dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, mode);
 	}
 	else
 	{
@@ -180,7 +221,7 @@ static void setupStructs(oplhw_alsa_device *dev)
 	memset(dev->oplOperators, 0, sizeof(dev->oplOperators));
 	memset(dev->oplChannels, 0, sizeof(dev->oplChannels));
 
-	for (i = 0; i < 18; ++i)
+	for (i = 0; i < 35; ++i)
 	{
 		dev->oplOperators[i].op = (i / 3) % 2;
 		dev->oplOperators[i].voice = (i / 6) * 3 + i % 3;
@@ -188,7 +229,7 @@ static void setupStructs(oplhw_alsa_device *dev)
 		dev->oplOperators[i].right = 1;
 	}
 
-	for (i = 0; i < 9; ++i)
+	for (i = 0; i < 18; ++i)
 	{
 		dev->oplChannels[i].voice = i;
 	}
@@ -245,18 +286,18 @@ oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name)
 
 	if (interface == SND_HWDEP_IFACE_OPL2)
 	{
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL2);
 		dev->dev.isOPL3 = false;
+		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL2);
 	}
 	else if (interface == SND_HWDEP_IFACE_OPL3)
 	{
-		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL3);
 		dev->dev.isOPL3 = true;
+		snd_hwdep_ioctl(dev->oplHwDep, SNDRV_DM_FM_IOCTL_SET_MODE, (void *)SNDRV_DM_FM_MODE_OPL3);
 	}
 
-	/* HACK: Disable OPL3 support for ALSA, as we don't fully implement it yet. */
-	dev->dev.isOPL3 = false;
-	
+	/* We start off with OPL3 disabled. */
+	dev->opl3Enabled = false;
+
 	setupStructs(dev);
 
 	return (oplhw_device *)dev;
