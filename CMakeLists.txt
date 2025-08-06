@@ -103,7 +103,8 @@ add_library(oplhw
 )
 
 target_include_directories(oplhw
-	PUBLIC "include/"
+	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	PRIVATE "include/"
 	PRIVATE ${ALSA_INCLUDE_DIRS}
 	PRIVATE ${OPLHW_MODULE_INCLUDE_DIRS}
@@ -122,6 +123,7 @@ configure_file(oplhw.pc.in oplhw.pc @ONLY)
 
 # Install
 install(TARGETS oplhw
+	EXPORT oplhw
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -132,6 +134,12 @@ install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES
 	${CMAKE_BINARY_DIR}/oplhw.pc
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
+install(EXPORT oplhw
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/oplhw"
+	FILE oplhwConfig.cmake
+	NAMESPACE oplhw::
 )
 
 # Examples:
