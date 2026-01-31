@@ -23,12 +23,12 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct oplhw_device
+struct oplhw_device
 {
 	bool isOPL3;
 	void (*close)(struct oplhw_device *dev);
 	void (*write)(struct oplhw_device *dev, uint16_t reg, uint8_t val);
-} oplhw_device;
+};
 
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name);
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name);

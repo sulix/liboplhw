@@ -76,6 +76,7 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 	oplhw_lpt_device *dev = calloc(1, sizeof(*dev));
 	struct parport_list all_ports = {};
 	int caps = CAP1284_RAW;
+	int i;
 
 	dev->dev.close = &oplhw_lpt_CloseDevice;
 	dev->dev.write = &oplhw_lpt_Write;
@@ -87,7 +88,7 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 		return NULL;
 	}
 
-	for (int i = 0; i < all_ports.portc; ++i)
+	for (i = 0; i < all_ports.portc; ++i)
 	{
 		if (!dev_name[0] || !strcmp(dev_name, all_ports.portv[i]->name))
 		{

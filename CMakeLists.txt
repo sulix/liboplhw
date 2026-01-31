@@ -112,6 +112,10 @@ target_include_directories(oplhw
 
 target_link_libraries(oplhw ${OPLHW_MODULE_LIBRARIES})
 
+set_target_properties(oplhw PROPERTIES
+	C_STANDARD 90
+)
+
 if(BUILD_SHARED_LIBS)
 	set_target_properties(oplhw PROPERTIES
 		C_VISIBILITY_PRESET hidden
