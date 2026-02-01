@@ -162,7 +162,14 @@ add_executable(oplhw_cmfplay
 
 target_link_libraries(oplhw_cmfplay oplhw m)
 
+add_executable(lsopl
+	examples/lsopl.c
+)
+
+target_link_libraries(lsopl oplhw)
+
 if (OPLHW_INSTALL_EXAMPLES)
 	install(TARGETS oplhw_imfplay)
 	install(TARGETS oplhw_cmfplay)
+	install(TARGETS lsopl)
 endif()

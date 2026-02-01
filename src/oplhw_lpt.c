@@ -119,3 +119,19 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 	return (oplhw_device *)dev;
 }
 
+void oplhw_lpt_Enumerate(struct oplhw_devlist *list)
+{
+	struct parport_list all_ports = {};
+	int i;
+
+	if (ieee1284_find_ports(&all_ports, 0) != E1284_OK)
+	{
+		return;
+	}
+
+	for (i = 0; i < all_ports.portc; ++i)
+	{
+		oplhw_devlist_add(list, "opl2lpt:", all_ports.portv[i]->name, all_ports.portv[i]->name);
+	}
+	ieee1284_free_ports(&all_ports);
+}

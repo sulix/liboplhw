@@ -135,3 +135,9 @@ oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name)
 	return (oplhw_device *)dev;
 }
 
+
+void oplhw_ioport_Enumerate(struct oplhw_devlist *list)
+{
+	//TODO: Find a way of enumerating these. Either via udev/PCI, or just
+	// a good old-fashioned BLASTER variable.
+}

@@ -115,3 +115,7 @@ oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3)
 	return (oplhw_device *)dev;
 }
 
+void oplhw_lpt_Enumerate(struct oplhw_devlist *list)
+{
+	// On linux, we're not currently enumerating these.
+}

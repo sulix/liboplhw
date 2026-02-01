@@ -30,9 +30,18 @@ struct oplhw_device
 	void (*write)(struct oplhw_device *dev, uint16_t reg, uint8_t val);
 };
 
+struct oplhw_devlist *oplhw_devlist_new();
+void oplhw_devlist_add(struct oplhw_devlist *list, const char *prefix, const char *path, const char *desc);
+void oplhw_devlist_free(struct oplhw_devlist *list);
+
 oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name);
 oplhw_device *oplhw_ioport_OpenDevice(const char *dev_name);
 oplhw_device *oplhw_lpt_OpenDevice(const char *dev_name, bool isOPL3);
 oplhw_device *oplhw_alsa_OpenDevice(const char *dev_name);
+
+void oplhw_retrowave_Enumerate(struct oplhw_devlist *list);
+void oplhw_ioport_Enumerate(struct oplhw_devlist *list);
+void oplhw_lpt_Enumerate(struct oplhw_devlist *list);
+void oplhw_alsa_Enumerate(struct oplhw_devlist *list);
 
 #endif
