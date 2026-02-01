@@ -30,6 +30,8 @@ check_include_file(linux/ppdev.h HAVE_LINUX_PPDEV_H)
 
 check_function_exists(ioperm HAVE_IOPERM)
 
+check_include_file(libudev.h HAVE_LIBUDEV_H)
+
 if(HAVE_LINUX_PPDEV_H)
 	set(OPLHW_LIBIEE1284_DEFAULT OFF)
 else()
@@ -87,6 +89,15 @@ elseif(UNIX)
 			-DUSE_DEV_PORT=1)
 endif()
 
+if(HAVE_LIBUDEV_H)
+	list(APPEND OPLHW_MODULE_SOURCES
+		src/oplhw_udev.c
+	)
+	list(APPEND OPLHW_MODULE_LIBRARIES
+		udev
+	)
+	add_definitions(-DWITH_UDEV=1)
+endif()
 
 # For now, we always have RetroWave support, as it just requires basic posix file I/O.
 list(APPEND OPLHW_MODULE_SOURCES

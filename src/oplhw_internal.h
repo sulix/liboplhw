@@ -44,4 +44,9 @@ void oplhw_ioport_Enumerate(struct oplhw_devlist *list);
 void oplhw_lpt_Enumerate(struct oplhw_devlist *list);
 void oplhw_alsa_Enumerate(struct oplhw_devlist *list);
 
+#ifdef WITH_UDEV
+// udev-based enumeration functions
+void oplhw_udev_enumerate_retrowave(struct oplhw_devlist *list);
+#endif
+
 #endif
