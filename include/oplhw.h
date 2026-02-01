@@ -51,6 +51,21 @@ OPLHW_API oplhw_device *oplhw_CreateVolumeFilter(oplhw_device *backing_dev);
 /* Set the volume. The device must be a volume filter device. */
 OPLHW_API int oplhw_SetVolume(oplhw_device *volume_dev, int volume);
 
+/* Device Enumeration */
+
+struct oplhw_devlist
+{
+	char *path;
+	char *description;
+	struct oplhw_devlist *next;
+};
+
+typedef struct oplhw_devlist oplhw_devlist;
+
+OPLHW_API oplhw_devlist *oplhw_Enumerate();
+OPLHW_API void oplhw_devlist_free(struct oplhw_devlist *list);
+
+
 #ifdef __cplusplus
 }
 #endif 

@@ -124,3 +124,7 @@ oplhw_device *oplhw_retrowave_OpenDevice(const char *dev_name)
 	return (oplhw_device *)dev;
 }
 
+void oplhw_retrowave_Enumerate(struct oplhw_devlist *list)
+{
+	//TODO: Work out how to enumerate USB devices on each supported platform.
+}

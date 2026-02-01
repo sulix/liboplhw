@@ -126,3 +126,69 @@ void oplhw_CloseDevice(oplhw_device *dev)
 {
 	dev->close(dev);
 }
+
+struct oplhw_devlist *oplhw_devlist_new()
+{
+	struct oplhw_devlist *list = calloc(1, sizeof(struct oplhw_devlist));
+	return list;
+}
+
+void oplhw_devlist_add(struct oplhw_devlist *list, const char *prefix, const char *path, const char *desc)
+{
+	struct oplhw_devlist *new_entry = list;
+	if (list->path)
+	{
+		new_entry = calloc(1, sizeof(struct oplhw_devlist));
+		list->next = new_entry;
+	}
+	asprintf(&new_entry->path, "%s%s", prefix, path);
+	new_entry->description = strdup(desc);
+}
+
+void oplhw_devlist_free(struct oplhw_devlist *list)
+{
+	struct oplhw_devlist *entry;
+	for (entry = list; entry;)
+	{
+		if (entry->path)
+			free(entry->path);
+		if (entry->description)
+			free(entry->description);
+		struct oplhw_devlist *old_entry = entry;
+		entry = entry->next;
+		free(old_entry);
+	}
+}
+
+OPLHW_API oplhw_devlist *oplhw_Enumerate()
+{
+	const char *relative_dev_name;
+	struct oplhw_devlist *list = oplhw_devlist_new();
+
+	/* Default to the device in $OPLHW_DEVICE if none specified. */
+	#ifdef HAVE_SECURE_GETENV
+	const char *dev_name = secure_getenv("OPLHW_DEVICE");
+	#else
+	const char *dev_name = getenv("OPLHW_DEVICE");
+	#endif
+
+	if (dev_name)
+	{
+		oplhw_devlist_add(list, "", dev_name, "User-provided OPLHW_DEVICE");
+	}
+
+	#ifdef WITH_OPLHW_MODULE_RETROWAVE
+	oplhw_retrowave_Enumerate(list);
+	#endif
+	#ifdef WITH_OPLHW_MODULE_IOPORT
+	oplhw_ioport_Enumerate(list);
+	#endif
+	#ifdef WITH_OPLHW_MODULE_LPT
+	oplhw_lpt_Enumerate(list);
+	#endif
+	#ifdef WITH_OPLHW_MODULE_ALSA
+	oplhw_alsa_Enumerate(list);
+	#endif
+
+	return list;
+}

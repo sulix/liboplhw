@@ -213,6 +213,33 @@ static const char *findHwDep()
 	return hwdep_name;
 }
 
+/* Find an OPL2 hwdep device to use as the default. */
+void oplhw_alsa_Enumerate(struct oplhw_devlist *list)
+{
+	void **hints, **current_hint;
+	const char *hwdep_name = NULL;
+	int err = snd_device_name_hint(-1, "hwdep", &hints);
+	if (err) {
+		return;
+	}
+
+	for (current_hint = hints; *current_hint; current_hint++)
+	{
+		const char *name = snd_device_name_get_hint(*current_hint, "NAME");
+		const char *desc = snd_device_name_get_hint(*current_hint, "DESC");
+		if (strstr(desc, "OPL3") || strstr(desc, "OPL2"))
+		{
+			char *cleaned_desc = strdup(desc);
+			*strchr(cleaned_desc, '\n') = '\0';
+			oplhw_devlist_add(list, "alsa:", name, cleaned_desc);
+			free(cleaned_desc);
+			break;
+		}
+	}
+
+	snd_device_name_free_hint(hints);
+}
+
 static void setupStructs(oplhw_alsa_device *dev)
 {
 	int i;
